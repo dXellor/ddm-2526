@@ -2,24 +2,25 @@ package com.ddm.server.dll.models;
 
 import com.ddm.server.dll.models.enums.ThreatLevel;
 import jakarta.persistence.*;
-import lombok.Getter;
-import lombok.Setter;
+import org.springframework.data.annotation.Id;
+import lombok.Data;
 import org.springframework.data.elasticsearch.annotations.Document;
 import org.springframework.data.elasticsearch.annotations.Field;
 import org.springframework.data.elasticsearch.annotations.FieldType;
 import org.springframework.data.elasticsearch.annotations.GeoPointField;
 import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 
-@Getter
-@Setter
+@Data
 @Entity
 @Table(name = "security_documents")
 @Document( indexName = "security_documents")
 public class SecurityDocument {
 
     @Id
+    @jakarta.persistence.Id
+    @GeneratedValue(strategy = GenerationType.AUTO)
     @Field(name = "id")
-    private long id;
+    private Long id;
 
     @Column(name = "full_name")
     @Field(type = FieldType.Text, name = "full_name", store = true)
