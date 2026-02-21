@@ -24,15 +24,15 @@ public class DocumentParsingService implements IDocumentParsingService {
 
     private final S3Client s3;
 
-    public DocumentParsingService(@Value("${rustfs.username}") String rustfsUsername,
-                                  @Value("${rustfs.password}") String rustfsPassword,
-                                  @Value("${rustfs.bucket}") String securityDocumentBucket){
+    public DocumentParsingService(@Value("${rustfs.username}") String rustFsUsername,
+                                  @Value("${rustfs.password}") String rustFsPassword,
+                                  @Value("${rustfs.url}") String rustFsUrl){
 
-        this.s3 = S3Client.builder().endpointOverride(URI.create("http://localhost:8000"))
+        this.s3 = S3Client.builder().endpointOverride(URI.create(rustFsUrl))
                 .region(Region.US_EAST_1)
                 .credentialsProvider(
                         StaticCredentialsProvider.create(
-                                AwsBasicCredentials.create(rustfsUsername, rustfsPassword))).forcePathStyle(true).build();
+                                AwsBasicCredentials.create(rustFsUsername, rustFsPassword))).forcePathStyle(true).build();
     }
 
     @Override
