@@ -1,6 +1,6 @@
 version: '3.8'
 
-# Self-reminder - disable SELinux is stuff does not work
+# Self-reminder - disable SELinux if stuff does not work
 
 services:
   rustfs:
@@ -60,6 +60,7 @@ services:
     ports:
       - "8004:9600"
       - "12201:12201/udp"
+      - "12202:12202/tcp"
     environment:
       - LS_JAVA_OPTS=-Xms512m -Xmx512m
       - XPACK_MONITORING_ENABLED=false
