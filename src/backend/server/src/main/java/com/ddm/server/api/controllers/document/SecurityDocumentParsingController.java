@@ -4,6 +4,7 @@ import com.ddm.server.bll.contracts.IDocumentParsingService;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentInfo;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentUploadRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -21,7 +22,7 @@ public class SecurityDocumentParsingController {
         this.documentService = documentService;
     }
 
-    @PostMapping("/parse")
+    @PostMapping(value = "/parse", consumes = MediaType.MULTIPART_FORM_DATA_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<?> parseDocument(/*@AuthenticationPrincipal UserDetails userDetails,*/
                                            @ModelAttribute SecurityDocumentUploadRequest uploadRequest) {
         try {

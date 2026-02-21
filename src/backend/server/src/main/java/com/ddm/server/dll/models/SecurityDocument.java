@@ -38,13 +38,17 @@ public class SecurityDocument {
     @Field(type = FieldType.Text, name = "threat_name", store = true)
     private String threatName;
 
+    @Column(name = "threat_description")
+    @Field(type = FieldType.Text, name = "threat_description", store = true)
+    private String threatDescription;
+
     @Column(name = "threat_level")
     @Enumerated(EnumType.STRING)
     @Field(type = FieldType.Text, name = "threat_level", store = true)
     private ThreatLevel threatLevel;
 
-    @Column(name = "threatSampleHash")
-    @Field(type = FieldType.Text, name = "threatSampleHash", store = true)
+    @Column(name = "threat_sample_hash")
+    @Field(type = FieldType.Text, name = "threat_sample_hash", store = true)
     private String threatSampleHash;
 
     @Transient
