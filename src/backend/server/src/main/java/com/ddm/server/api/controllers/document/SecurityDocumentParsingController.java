@@ -9,6 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 @Slf4j
@@ -31,6 +32,19 @@ public class SecurityDocumentParsingController {
             return ResponseEntity.ok(parsedDocument);
         } catch (Exception e) {
             log.error("Error while parsing a file named {} for user {}. Error message: {}.", uploadRequest.getDocument().getOriginalFilename(), "mr.epic", e.getMessage());
+            return ResponseEntity.badRequest().body(e.getMessage());
+        }
+    }
+
+    @PostMapping(value = "/index")
+    public ResponseEntity<?> indexDocument(/*@AuthenticationPrincipal UserDetails userDetails,*/
+            @RequestBody SecurityDocumentInfo documentInfo) {
+        try {
+            SecurityDocumentInfo parsedDocument = this.documentService.index(documentInfo);
+            log.info("User {} indexed a document", "mr.epic");
+            return ResponseEntity.ok(parsedDocument);
+        } catch (Exception e) {
+            log.error("Error while indexing document {} for user {}. Error message: {}.", documentInfo.hashCode(), "mr.epic", e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
     }

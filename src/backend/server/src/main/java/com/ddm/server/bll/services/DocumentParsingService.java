@@ -5,11 +5,16 @@ import com.ddm.server.bll.dtos.upload.SecurityDocumentInfo;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentUploadRequest;
 import com.ddm.server.dll.models.SecurityDocument;
 import com.ddm.server.dll.models.enums.ThreatLevel;
+import com.ddm.server.dll.repositories.es.SecurityDocumentIndexRepository;
 import com.ddm.server.dll.repositories.postgres.SecurityDocumentRepository;
 import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
+import org.hibernate.Hibernate;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -24,6 +29,11 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
 import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Matcher;
@@ -35,6 +45,10 @@ public class DocumentParsingService implements IDocumentParsingService {
 
     @Value("${rustfs.bucket}")
     private String securityDocumentBucket;
+    @Value("${geocoding.api_url}")
+    private String geocodingApiUrl;
+    @Value("${geocoding.api_key}")
+    private String geocodingApiKey;
     private final S3Client s3;
     private final Pattern forensicsPersonPattern = Pattern.compile("Nadležni forenzičar: (.+)", Pattern.UNICODE_CHARACTER_CLASS);
     private final Pattern cirtEntityPattern = Pattern.compile("Uzorak podnesen od strane: (.+)", Pattern.UNICODE_CHARACTER_CLASS);
@@ -44,13 +58,16 @@ public class DocumentParsingService implements IDocumentParsingService {
     private final Pattern threatLevelPattern = Pattern.compile("Nivo pretnje: (.+)", Pattern.UNICODE_CHARACTER_CLASS);
     private final Pattern hashPattern = Pattern.compile("Heš uzorka: (.+)", Pattern.UNICODE_CHARACTER_CLASS);
     private final SecurityDocumentRepository securityDocumentRepository;
+    private final SecurityDocumentIndexRepository securityDocumentIndexRepository;
 
     public DocumentParsingService(SecurityDocumentRepository documentRepository,
-                                @Value("${rustfs.username}") String rustFsUsername,
+                                  SecurityDocumentIndexRepository indexRepository,
+                                  @Value("${rustfs.username}") String rustFsUsername,
                                   @Value("${rustfs.password}") String rustFsPassword,
                                   @Value("${rustfs.url}") String rustFsUrl){
 
         this.securityDocumentRepository = documentRepository;
+        this.securityDocumentIndexRepository = indexRepository;
         this.s3 = S3Client.builder().endpointOverride(URI.create(rustFsUrl))
                 .region(Region.US_EAST_1)
                 .credentialsProvider(
@@ -78,10 +95,9 @@ public class DocumentParsingService implements IDocumentParsingService {
             throw new Exception("Unable to upload document to the server. Aborting request");
         }
 
-
         // Step 3 - save entry in the database
         newDocument.setDocumentKey(documentKey);
-        this.securityDocumentRepository.save(newDocument);
+        newDocument = this.securityDocumentRepository.save(newDocument);
 
         return new SecurityDocumentInfo(newDocument);
     }
@@ -93,7 +109,29 @@ public class DocumentParsingService implements IDocumentParsingService {
 
     @Override
     public SecurityDocumentInfo index(SecurityDocumentInfo documentInfo) {
-        return null;
+        // Step 1 - save new info
+        SecurityDocument document = this.securityDocumentRepository.getReferenceById(documentInfo.getId());
+        document.setThreatName(documentInfo.getThreatName());
+        document.setDocumentContent(documentInfo.getDocumentContent());
+        document.setThreatLevel(documentInfo.getThreatLevel());
+        document.setThreatDescription(documentInfo.getThreatDescription());
+        document.setOrgAddress(documentInfo.getOrgAddress());
+        document.setOrgName(documentInfo.getOrgName());
+        document.setFullName(documentInfo.getFullName());
+        document.setThreatSampleHash(documentInfo.getThreatSampleHash());
+        this.securityDocumentRepository.save(document);
+
+        document = (SecurityDocument) Hibernate.unproxy(document);
+        // Step 2 - geolocate
+        try {
+            document.setGeoPoint(this.geocodeAddress(document.getOrgAddress()));
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+
+        // Step 3 - index in ES
+        this.securityDocumentIndexRepository.save(document);
+        return new SecurityDocumentInfo(document);
     }
 
     private SecurityDocument parseDocument(MultipartFile file){
@@ -157,6 +195,26 @@ public class DocumentParsingService implements IDocumentParsingService {
 
             default:
                 return null;
+        }
+    }
+
+    private GeoPoint geocodeAddress(String address) throws Exception {
+        try(HttpClient client = HttpClient.newHttpClient()){
+            String requestUrl = String.format("%s?q=%s&api_key=%s", this.geocodingApiUrl, URLEncoder.encode(address, StandardCharsets.UTF_8), this.geocodingApiKey);
+            HttpRequest request = HttpRequest.newBuilder()
+                    .uri(URI.create(requestUrl))
+                    .GET().build();
+
+            String result = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
+            JSONArray jsonResults = new JSONArray(result);
+            if (!jsonResults.isEmpty()) {
+                JSONObject firstMatch = jsonResults.getJSONObject(0);
+                return new GeoPoint(firstMatch.getDouble("lat"), firstMatch.getDouble("lon"));
+            }
+            throw new Exception("unlucky");
+        }catch (Exception e){
+            log.error("Unable to geocode address before indexing");
+            throw new Exception("Unable to geocode address before indexing");
         }
     }
 }
