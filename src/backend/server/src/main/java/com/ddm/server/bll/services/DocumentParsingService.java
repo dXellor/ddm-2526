@@ -23,6 +23,7 @@ import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
+import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -103,8 +104,15 @@ public class DocumentParsingService implements IDocumentParsingService {
     }
 
     @Override
-    public void delete(String uuid) {
+    public void delete(Long id) {
+        SecurityDocument document = this.securityDocumentRepository.getReferenceById(id);
+        if(document == null)
+            return;
 
+        this.s3.deleteObject(
+                DeleteObjectRequest.builder().bucket(this.securityDocumentBucket).key(document.getDocumentKey()).build()
+        );
+        this.securityDocumentRepository.deleteById(id);
     }
 
     @Override

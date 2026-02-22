@@ -7,6 +7,6 @@ import java.io.IOException;
 
 public interface IDocumentParsingService {
     SecurityDocumentInfo parseAndSave(SecurityDocumentUploadRequest uploadRequest) throws Exception;
-    void delete(String uuid);
+    void delete(Long id);
     SecurityDocumentInfo index(SecurityDocumentInfo documentInfo);
 }

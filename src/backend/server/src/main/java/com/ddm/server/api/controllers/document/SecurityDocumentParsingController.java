@@ -9,10 +9,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
-import org.springframework.web.bind.annotation.ModelAttribute;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.*;
 
 @Slf4j
 @RequestMapping("/document")
@@ -49,5 +46,11 @@ public class SecurityDocumentParsingController {
             log.error("Error while indexing document {} for user {}. Error message: {}.", documentInfo.hashCode(), userDetails.getUsername(), e.getMessage());
             return ResponseEntity.badRequest().body(e.getMessage());
         }
+    }
+
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<?> deleteDocument(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id){
+        this.documentService.delete(id);
+        return ResponseEntity.noContent().build();
     }
 }
