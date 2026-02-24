@@ -6,4 +6,6 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class GeoPointSearchRequest {
+    private String address;
+    private Long distance;
 }

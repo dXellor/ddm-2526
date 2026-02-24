@@ -10,11 +10,7 @@ import com.ddm.server.dll.repositories.es.SecurityDocumentIndexRepository;
 import com.ddm.server.dll.repositories.postgres.SecurityDocumentRepository;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
-import org.hibernate.Hibernate;
-import org.json.JSONArray;
-import org.json.JSONObject;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,11 +26,6 @@ import org.apache.pdfbox.text.PDFTextStripper;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URLEncoder;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,10 +36,7 @@ public class DocumentParsingService implements IDocumentParsingService {
 
     @Value("${rustfs.bucket}")
     private String securityDocumentBucket;
-    @Value("${geocoding.api_url}")
-    private String geocodingApiUrl;
-    @Value("${geocoding.api_key}")
-    private String geocodingApiKey;
+
     private final S3Client s3;
     private final Pattern forensicsPersonPattern = Pattern.compile("Nadležni forenzičar: (.+)", Pattern.UNICODE_CHARACTER_CLASS);
     private final Pattern cirtEntityPattern = Pattern.compile("Uzorak podnesen od strane: (.+)", Pattern.UNICODE_CHARACTER_CLASS);
@@ -60,16 +48,18 @@ public class DocumentParsingService implements IDocumentParsingService {
     private final SecurityDocumentRepository securityDocumentRepository;
     private final SecurityDocumentIndexRepository securityDocumentIndexRepository;
     private final SentanceTransformService sentanceTransformService;
+    private final GeoCodingService geoCodingService;
 
     public DocumentParsingService(SecurityDocumentRepository documentRepository,
                                   SecurityDocumentIndexRepository indexRepository,
                                   @Value("${rustfs.username}") String rustFsUsername,
                                   @Value("${rustfs.password}") String rustFsPassword,
-                                  @Value("${rustfs.url}") String rustFsUrl, SentanceTransformService sentanceTransformService){
+                                  @Value("${rustfs.url}") String rustFsUrl, SentanceTransformService sentanceTransformService, GeoCodingService geoCodingService){
 
         this.securityDocumentRepository = documentRepository;
         this.securityDocumentIndexRepository = indexRepository;
         this.sentanceTransformService = sentanceTransformService;
+        this.geoCodingService = geoCodingService;
         this.s3 = S3Client.builder().endpointOverride(URI.create(rustFsUrl))
                 .region(Region.US_EAST_1)
                 .credentialsProvider(
@@ -140,7 +130,7 @@ public class DocumentParsingService implements IDocumentParsingService {
         documentIndex.setFullName(documentInfo.getFullName());
         documentIndex.setThreatSampleHash(documentInfo.getThreatSampleHash());
         try{
-            documentIndex.setGeoPoint(this.geocodeAddress(documentInfo.getOrgAddress()));
+            documentIndex.setGeoPoint(this.geoCodingService.geocodeAddress(documentInfo.getOrgAddress()));
             documentIndex.setVectorizedContent(this.sentanceTransformService.embedText(documentInfo.getDocumentContent()));
             documentIndex.setSystemId(document.getId());
         } catch (Exception e) {
@@ -213,26 +203,6 @@ public class DocumentParsingService implements IDocumentParsingService {
 
             default:
                 return null;
-        }
-    }
-
-    private GeoPoint geocodeAddress(String address) throws Exception {
-        try(HttpClient client = HttpClient.newHttpClient()){
-            String requestUrl = String.format("%s?q=%s&api_key=%s", this.geocodingApiUrl, URLEncoder.encode(address, StandardCharsets.UTF_8), this.geocodingApiKey);
-            HttpRequest request = HttpRequest.newBuilder()
-                    .uri(URI.create(requestUrl))
-                    .GET().build();
-
-            String result = client.send(request, HttpResponse.BodyHandlers.ofString()).body();
-            JSONArray jsonResults = new JSONArray(result);
-            if (!jsonResults.isEmpty()) {
-                JSONObject firstMatch = jsonResults.getJSONObject(0);
-                return new GeoPoint(firstMatch.getDouble("lat"), firstMatch.getDouble("lon"));
-            }
-            throw new Exception("unlucky");
-        }catch (Exception e){
-            log.error("Unable to geocode address before indexing");
-            throw new Exception("Unable to geocode address before indexing");
         }
     }
 }

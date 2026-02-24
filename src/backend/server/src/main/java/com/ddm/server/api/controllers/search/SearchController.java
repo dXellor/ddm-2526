@@ -1,6 +1,7 @@
 package com.ddm.server.api.controllers.search;
 
 import com.ddm.server.bll.contracts.ISearchService;
+import com.ddm.server.bll.dtos.search.GeoPointSearchRequest;
 import com.ddm.server.bll.dtos.search.KnnSearchRequest;
 import com.ddm.server.bll.dtos.search.ParameterSearchRequest;
 import org.springframework.data.domain.Pageable;
@@ -35,6 +36,15 @@ public class SearchController {
     public ResponseEntity<?> searchByKnn(@AuthenticationPrincipal UserDetails userDetails, @RequestBody KnnSearchRequest request, Pageable pageable){
         try {
             return ResponseEntity.ok(this.searchService.knnSearch(request, pageable));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("geo")
+    public ResponseEntity<?> searchByGeoPosition(@AuthenticationPrincipal UserDetails userDetails, @RequestBody GeoPointSearchRequest request, Pageable pageable){
+        try {
+            return ResponseEntity.ok(this.searchService.geoPointSearch(request, pageable));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

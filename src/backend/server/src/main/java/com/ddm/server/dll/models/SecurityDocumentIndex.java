@@ -5,12 +5,10 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
 import com.fasterxml.jackson.databind.ser.std.ToStringSerializer;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
+import org.elasticsearch.common.geo.GeoPoint;
 import org.springframework.data.annotation.Id;
 import lombok.Data;
 import org.springframework.data.elasticsearch.annotations.*;
-import org.springframework.data.elasticsearch.core.geo.GeoPoint;
 
 @Data
 @Document(indexName = "security_documents")
