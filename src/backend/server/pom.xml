@@ -68,9 +68,8 @@
 
         <!-- Source: https://mvnrepository.com/artifact/org.springframework.data/spring-data-elasticsearch -->
         <dependency>
-            <groupId>org.springframework.data</groupId>
-            <artifactId>spring-data-elasticsearch</artifactId>
-            <scope>compile</scope>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-elasticsearch</artifactId>
         </dependency>
 
         <dependency>
@@ -82,6 +81,12 @@
         <dependency>
             <groupId>org.springframework.boot</groupId>
             <artifactId>spring-boot-starter-logging</artifactId>
+        </dependency>
+
+        <dependency>
+            <groupId>org.elasticsearch</groupId>
+            <artifactId>elasticsearch</artifactId>
+            <version>8.16.2</version>
         </dependency>
 
         <dependency>
@@ -131,6 +136,8 @@
             <version>0.11.5</version>
             <scope>runtime</scope>
         </dependency>
+
+
     </dependencies>
 
     <build>

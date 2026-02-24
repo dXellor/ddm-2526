@@ -4,10 +4,14 @@ import com.ddm.server.dll.models.SecurityDocument;
 import com.ddm.server.dll.models.enums.ThreatLevel;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.annotation.JsonSerialize;
+import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @JsonSerialize
 @Data
+@AllArgsConstructor
+@NoArgsConstructor
 public class SecurityDocumentInfo {
     @JsonProperty("id")
     private Long id;
@@ -35,20 +39,6 @@ public class SecurityDocumentInfo {
 
     @JsonProperty("documentContent")
     private String documentContent;
-
-    public SecurityDocumentInfo(){}
-
-    public SecurityDocumentInfo(Long id, String fullName, String orgName, String orgAddress, String threatName, String threatDescription, String threatSampleHash, ThreatLevel threatLevel, String documentContent) {
-        this.id = id;
-        this.fullName = fullName;
-        this.orgName = orgName;
-        this.orgAddress = orgAddress;
-        this.threatName = threatName;
-        this.threatDescription = threatDescription;
-        this.threatSampleHash = threatSampleHash;
-        this.threatLevel = threatLevel;
-        this.documentContent = documentContent;
-    }
 
     public SecurityDocumentInfo(SecurityDocument document){
         this.id = document.getId();

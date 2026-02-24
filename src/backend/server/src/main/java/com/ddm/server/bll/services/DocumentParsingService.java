@@ -4,10 +4,10 @@ import com.ddm.server.bll.contracts.IDocumentParsingService;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentInfo;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentUploadRequest;
 import com.ddm.server.dll.models.SecurityDocument;
+import com.ddm.server.dll.models.SecurityDocumentIndex;
 import com.ddm.server.dll.models.enums.ThreatLevel;
 import com.ddm.server.dll.repositories.es.SecurityDocumentIndexRepository;
 import com.ddm.server.dll.repositories.postgres.SecurityDocumentRepository;
-import lombok.extern.log4j.Log4j;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.pdfbox.Loader;
 import org.hibernate.Hibernate;
@@ -35,7 +35,6 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Locale;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -60,15 +59,17 @@ public class DocumentParsingService implements IDocumentParsingService {
     private final Pattern hashPattern = Pattern.compile("Heš uzorka: (.+)", Pattern.UNICODE_CHARACTER_CLASS);
     private final SecurityDocumentRepository securityDocumentRepository;
     private final SecurityDocumentIndexRepository securityDocumentIndexRepository;
+    private final SentanceTransformService sentanceTransformService;
 
     public DocumentParsingService(SecurityDocumentRepository documentRepository,
                                   SecurityDocumentIndexRepository indexRepository,
                                   @Value("${rustfs.username}") String rustFsUsername,
                                   @Value("${rustfs.password}") String rustFsPassword,
-                                  @Value("${rustfs.url}") String rustFsUrl){
+                                  @Value("${rustfs.url}") String rustFsUrl, SentanceTransformService sentanceTransformService){
 
         this.securityDocumentRepository = documentRepository;
         this.securityDocumentIndexRepository = indexRepository;
+        this.sentanceTransformService = sentanceTransformService;
         this.s3 = S3Client.builder().endpointOverride(URI.create(rustFsUrl))
                 .region(Region.US_EAST_1)
                 .credentialsProvider(
@@ -120,7 +121,6 @@ public class DocumentParsingService implements IDocumentParsingService {
         // Step 1 - save new info
         SecurityDocument document = this.securityDocumentRepository.getReferenceById(documentInfo.getId());
         document.setThreatName(documentInfo.getThreatName());
-        document.setDocumentContent(documentInfo.getDocumentContent());
         document.setThreatLevel(documentInfo.getThreatLevel());
         document.setThreatDescription(documentInfo.getThreatDescription());
         document.setOrgAddress(documentInfo.getOrgAddress());
@@ -129,16 +129,26 @@ public class DocumentParsingService implements IDocumentParsingService {
         document.setThreatSampleHash(documentInfo.getThreatSampleHash());
         this.securityDocumentRepository.save(document);
 
-        document = (SecurityDocument) Hibernate.unproxy(document);
-        // Step 2 - geolocate
-        try {
-            document.setGeoPoint(this.geocodeAddress(document.getOrgAddress()));
+        // Step 2 - populate index, geolocate
+        SecurityDocumentIndex documentIndex = new SecurityDocumentIndex();
+        documentIndex.setThreatName(documentInfo.getThreatName());
+        documentIndex.setDocumentContent(documentInfo.getDocumentContent());
+        documentIndex.setThreatLevel(documentInfo.getThreatLevel());
+        documentIndex.setThreatDescription(documentInfo.getThreatDescription());
+        documentIndex.setOrgAddress(documentInfo.getOrgAddress());
+        documentIndex.setOrgName(documentInfo.getOrgName());
+        documentIndex.setFullName(documentInfo.getFullName());
+        documentIndex.setThreatSampleHash(documentInfo.getThreatSampleHash());
+        try{
+            documentIndex.setGeoPoint(this.geocodeAddress(documentInfo.getOrgAddress()));
+            documentIndex.setVectorizedContent(this.sentanceTransformService.embedText(documentInfo.getDocumentContent()));
+            documentIndex.setSystemId(document.getId());
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
         // Step 3 - index in ES
-        this.securityDocumentIndexRepository.save(document);
+        this.securityDocumentIndexRepository.save(documentIndex);
         return new SecurityDocumentInfo(document);
     }
 

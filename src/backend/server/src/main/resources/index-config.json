@@ -1,0 +1,32 @@
+{
+  "analysis": {
+    "analyzer": {
+      "serbian": {
+        "type": "custom",
+        "tokenizer": "standard",
+        "filter": [
+          "serbian_cyrillic_to_latin",
+          "icu_folding",
+          "lowercase",
+          "serbian_stop_words_remover",
+          "serbian_stemmer"
+        ]
+      }
+    },
+    "filter": {
+      "serbian_stemmer": {
+        "type": "stemmer",
+        "language": "serbian"
+      },
+      "serbian_stop_words_remover": {
+        "type": "stop",
+        "ignore_case": true,
+        "stopwords": "_serbian_"
+      },
+      "serbian_cyrillic_to_latin": {
+        "type": "icu_transform",
+        "id": "Cyrillic-Latin"
+      }
+    }
+  }
+}
