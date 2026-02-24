@@ -1,6 +1,7 @@
 package com.ddm.server.api.controllers.search;
 
 import com.ddm.server.bll.contracts.ISearchService;
+import com.ddm.server.bll.dtos.search.BqSearchRequest;
 import com.ddm.server.bll.dtos.search.GeoPointSearchRequest;
 import com.ddm.server.bll.dtos.search.KnnSearchRequest;
 import com.ddm.server.bll.dtos.search.ParameterSearchRequest;
@@ -36,6 +37,15 @@ public class SearchController {
     public ResponseEntity<?> searchByKnn(@AuthenticationPrincipal UserDetails userDetails, @RequestBody KnnSearchRequest request, Pageable pageable){
         try {
             return ResponseEntity.ok(this.searchService.knnSearch(request, pageable));
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @GetMapping("bq")
+    public ResponseEntity<?> searchByBq(@AuthenticationPrincipal UserDetails userDetails, @RequestBody BqSearchRequest request, Pageable pageable){
+        try {
+            return ResponseEntity.ok(this.searchService.semiStructuredSearch(request.getQuery(), pageable));
         } catch (Exception e) {
             return ResponseEntity.internalServerError().build();
         }

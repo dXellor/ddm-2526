@@ -2,7 +2,9 @@ package com.ddm.server.bll.services;
 
 import co.elastic.clients.elasticsearch.ElasticsearchClient;
 import co.elastic.clients.elasticsearch._types.LatLonGeoLocation;
+import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
+import co.elastic.clients.elasticsearch.core.search.Highlight;
 import com.ddm.server.bll.contracts.ISearchService;
 import com.ddm.server.bll.dtos.search.GeoPointSearchRequest;
 import com.ddm.server.bll.dtos.search.KnnSearchRequest;
@@ -18,10 +20,7 @@ import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
@@ -32,12 +31,14 @@ public class SearchService implements ISearchService {
     private final ElasticsearchClient elasticsearchClient;
     private final SentanceTransformService sentanceTransformService;
     private final GeoCodingService geoCodingService;
+    private final BQParserService bqParserService;
 
-    public SearchService(SecurityDocumentIndexRepository indexRepository, ElasticsearchClient elasticsearchClient, SentanceTransformService sentanceTransformService, GeoCodingService geoCodingService) {
+    public SearchService(SecurityDocumentIndexRepository indexRepository, ElasticsearchClient elasticsearchClient, SentanceTransformService sentanceTransformService, GeoCodingService geoCodingService, BQParserService bqParserService) {
         this.indexRepository = indexRepository;
         this.elasticsearchClient = elasticsearchClient;
         this.sentanceTransformService = sentanceTransformService;
         this.geoCodingService = geoCodingService;
+        this.bqParserService = bqParserService;
     }
 
 
@@ -102,8 +103,22 @@ public class SearchService implements ISearchService {
     }
 
     @Override
-    public Page<SecurityDocumentSearchResponse> semiStructuredSearch(String query, Pageable pageable) {
-        return null;
+    public Page<SecurityDocumentSearchResponse> semiStructuredSearch(String query, Pageable pageable) throws Exception {
+        try {
+            Query esQuery = this.bqParserService.parseQuery(query);
+
+            SearchResponse<SecurityDocumentIndex> response = this.elasticsearchClient.search(s -> s
+                            .index("security_documents")
+                            .from((int) pageable.getOffset())
+                            .size(pageable.getPageSize())
+                            .query(esQuery),
+                    SecurityDocumentIndex.class
+            );
+            return new PageImpl<>(response.hits().hits().stream().map(hit -> new SecurityDocumentSearchResponse(hit.source())).collect(Collectors.toList()), pageable, response.hits().hits().size());
+        } catch (Exception e) {
+            log.error("Error when making an bq index search {}", e.getMessage());
+            throw new Exception("Error semi-structured searching the indexed documents.");
+        }
     }
 
     @Override
