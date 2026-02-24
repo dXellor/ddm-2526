@@ -25,7 +25,7 @@
       },
       "serbian_cyrillic_to_latin": {
         "type": "icu_transform",
-        "id": "Cyrillic-Latin"
+        "id": "Any-Latin; Lower()"
       }
     }
   }
