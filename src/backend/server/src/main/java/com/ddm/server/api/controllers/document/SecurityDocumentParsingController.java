@@ -44,7 +44,7 @@ public class SecurityDocumentParsingController {
             @RequestBody SecurityDocumentInfo documentInfo) {
         try {
             SecurityDocumentInfo parsedDocument = this.documentService.index(documentInfo);
-            log.info("User {} indexed a document", userDetails.getUsername());
+            log.info("User {} indexed a document. Forensics inspector name: {}, Threat/Malware name: {}, Org address: {}", userDetails.getUsername(), documentInfo.getFullName(), documentInfo.getThreatName(), documentInfo.getOrgAddress());
             return ResponseEntity.ok(parsedDocument);
         } catch (Exception e) {
             log.error("Error while indexing document {} for user {}. Error message: {}.", documentInfo.hashCode(), userDetails.getUsername(), e.getMessage());

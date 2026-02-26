@@ -6,7 +6,7 @@ import { UploadComponent } from './features/upload/upload.component';
 
 export const routes: Routes = [
   { path: 'login', component: LoginComponent },
-  { path: 'upload', component: UploadComponent },
+  { path: 'upload', component: UploadComponent, canActivate: [authGuard] },
   { path: 'home', component: HomeComponent, canActivate: [authGuard] },
   { path: '', redirectTo: 'login', pathMatch: 'full' },
   { path: '**', redirectTo: 'login' }
