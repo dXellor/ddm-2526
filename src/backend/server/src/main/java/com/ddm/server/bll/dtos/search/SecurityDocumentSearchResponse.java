@@ -39,7 +39,10 @@ public class SecurityDocumentSearchResponse {
     @JsonProperty("documentContent")
     private String documentContent;
 
-    public SecurityDocumentSearchResponse(SecurityDocumentIndex documentIndex){
+    @JsonProperty("contentSummary")
+    private String contentSummary;
+
+    public SecurityDocumentSearchResponse(SecurityDocumentIndex documentIndex, String contentSummary){
         this.id = documentIndex.getSystemId();
         this.fullName = documentIndex.getFullName();
         this.orgName = documentIndex.getOrgName();
@@ -49,5 +52,6 @@ public class SecurityDocumentSearchResponse {
         this.threatLevel = documentIndex.getThreatLevel();
         this.threatSampleHash = documentIndex.getThreatSampleHash();
         this.documentContent = documentIndex.getDocumentContent();
+        this.contentSummary = contentSummary;
     }
 }

@@ -58,9 +58,9 @@ export class HomeComponent {
     { field: 'orgName', header: 'Naziv CERT organizacije' },
     { field: 'orgAddress', header: 'Adresa organizacije' },
     { field: 'threatName', header: 'Naziv pretnje' },
-    { field: 'threatDescription', header: 'Opis pretnje' },
     { field: 'threatLevel', header: 'Nivo pretnje' },
     { field: 'threatSampleHash', header: 'Hes uzorka' },
+    { field: 'contentSummary', header: 'Sazetak' },
   ];
 
   onPageChange(event: any) {
@@ -87,6 +87,17 @@ export class HomeComponent {
         break;
 
       case 1:
+        this.searchService
+          .booleanSearch(
+            {
+              query: this.booleanQuery
+            },
+            page,
+          )
+          .subscribe((res) => {
+            this.results = res.content;
+            this.currentPage = res.pageable.pageNumber;
+          });
         break;
 
       case 2:

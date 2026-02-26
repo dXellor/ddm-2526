@@ -9,6 +9,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 @Service
 public class BQParserService {
@@ -36,10 +38,11 @@ public class BQParserService {
         for(int i = 0; i < processedUnits.size(); i++){
             Object processedUnit = processedUnits.get(i);
             if(processedUnit instanceof BQToken && ((BQToken) processedUnit).getType() == BQTokenType.AND){
-                BQToken leftToken = (BQToken) processedUnits.get(i - 1);
-                BQToken rightToken = (BQToken) processedUnits.get(++i);
-                processedUnits2.add(Query.of(b -> b.bool(bq -> bq.must(this.queryBasedOnFieldValuePair(leftToken)).must(this.queryBasedOnFieldValuePair(rightToken)))));
+                Query leftQuery = (Query) processedUnits.get(i - 1);
+                Query rightQuery = (Query) processedUnits.get(++i);
+                processedUnits2.add(Query.of(b -> b.bool(bq -> bq.must(leftQuery).must(rightQuery))));
                 i++;
+                processedUnits2.remove(leftQuery);
             }else{
                 processedUnits2.add(processedUnit);
             }
@@ -64,7 +67,8 @@ public class BQParserService {
     }
 
     private List<BQToken> parseTokens(String query){
-        return Arrays.stream(query.split(" ")).map(part -> {
+        String tempQuery = this.replaceSpacesInsideQuotes(query);
+        return Arrays.stream(tempQuery.split(" ")).map(part -> {
             if(part.contains(":")){
                 return new BQToken(part.split(":")[0], part.split(":")[1], BQTokenType.ST);
             }else{
@@ -86,7 +90,7 @@ public class BQParserService {
 
     private Query queryBasedOnFieldValuePair(BQToken token) {
         String field = token.getFieldName();
-        String value = token.getFieldValue();
+        String value = token.getFieldValue().replaceAll("%@@%", " ");
         boolean isQuoted = value.startsWith("'") && value.endsWith("'");
         final String finalValue = isQuoted ? value.substring(1, value.length() - 1) : value;
         if (isQuoted) {
@@ -98,5 +102,22 @@ public class BQParserService {
                     .query(finalValue)
             ));
         }
+    }
+
+    private String replaceSpacesInsideQuotes(String input) {
+
+        Pattern pattern = Pattern.compile("'([^']*)'");
+        Matcher matcher = pattern.matcher(input);
+
+        StringBuffer result = new StringBuffer();
+
+        while (matcher.find()) {
+            String inside = matcher.group(1);
+            String replaced = inside.replace(" ", "%@@%"); // replace spaces inside quotes
+            matcher.appendReplacement(result, "'" + Matcher.quoteReplacement(replaced) + "'");
+        }
+
+        matcher.appendTail(result);
+        return result.toString();
     }
 }

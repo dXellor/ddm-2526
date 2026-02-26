@@ -5,16 +5,18 @@ import { environment } from '../../environments/environment';
 import { SearchResponse } from '../models/search-response';
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class SearchService {
-
   private readonly API_URL = `${environment.apiUrl}/search`;
 
   constructor(private http: HttpClient) {}
 
-  parameterSearch(request: { fieldName: string; value: string }, page: number = 0, size: number = 10): Observable<SearchResponse> {
-
+  parameterSearch(
+    request: { fieldName: string; value: string },
+    page: number = 0,
+    size: number = 10,
+  ): Observable<SearchResponse> {
     const token = localStorage.getItem('token');
     const params = new HttpParams()
       .set('fieldName', request.fieldName)
@@ -22,22 +24,51 @@ export class SearchService {
       .set('page', page)
       .set('size', size);
 
-    return this.http.get<SearchResponse>(`${this.API_URL}/parameter`, {params, headers: { Authorization: `Bearer ${token}`}});
+    return this.http.get<SearchResponse>(`${this.API_URL}/parameter`, {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }
 
-  knnSearch(request: { query: string }, page: number = 0, size: number = 10): Observable<SearchResponse> {
-
+  knnSearch(
+    request: { query: string },
+    page: number = 0,
+    size: number = 10,
+  ): Observable<SearchResponse> {
     const token = localStorage.getItem('token');
     const params = new HttpParams()
       .set('query', request.query)
       .set('page', page)
       .set('size', size);
 
-    return this.http.get<SearchResponse>(`${this.API_URL}/knn`, {params, headers: { Authorization: `Bearer ${token}`}});
+    return this.http.get<SearchResponse>(`${this.API_URL}/knn`, {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }
 
-  geoSearch(request: { address: string, radius: number }, page: number = 0, size: number = 10): Observable<SearchResponse> {
+  booleanSearch(
+    request: { query: string },
+    page: number = 0,
+    size: number = 10,
+  ): Observable<SearchResponse> {
+    const token = localStorage.getItem('token');
+    const params = new HttpParams()
+      .set('query', request.query)
+      .set('page', page)
+      .set('size', size);
 
+    return this.http.get<SearchResponse>(`${this.API_URL}/bq`, {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
+  }
+
+  geoSearch(
+    request: { address: string; radius: number },
+    page: number = 0,
+    size: number = 10,
+  ): Observable<SearchResponse> {
     const token = localStorage.getItem('token');
     const params = new HttpParams()
       .set('address', request.address)
@@ -45,6 +76,9 @@ export class SearchService {
       .set('page', page)
       .set('size', size);
 
-    return this.http.get<SearchResponse>(`${this.API_URL}/geo`, {params, headers: { Authorization: `Bearer ${token}`}});
+    return this.http.get<SearchResponse>(`${this.API_URL}/geo`, {
+      params,
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }
 }

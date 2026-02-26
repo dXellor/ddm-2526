@@ -41,13 +41,25 @@
         </p-tabpanel>
 
         <p-tabpanel [value]="1">
-          <div class="flex gap-2">
-            <input
-              pInputText
+          <div class="flex flex-column gap-2">
+            <!-- Boolean Query Input -->
+            <textarea
+              pInputTextarea
+              rows="3"
               [(ngModel)]="booleanQuery"
-              placeholder="AND / OR query..."
-            />
-            <button pButton label="Search" (click)="search()"></button>
+              placeholder="Enter boolean search..."
+              class="w-full"
+            >
+            </textarea>
+
+            <!-- Search Button -->
+            <button
+              pButton
+              label="Search"
+              icon="pi pi-search"
+              (click)="search()"
+              [disabled]="!booleanQuery.trim()"
+            ></button>
           </div>
         </p-tabpanel>
 
@@ -131,6 +143,18 @@
         <tr>
           @for (col of columns; track col.field) {
             <td>{{ row[col.field] }}</td>
+          }
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row>
+        <tr>
+          @for (col of columns; track col.field) {
+            <!-- Use innerHTML for summary / highlighted fields -->
+            <td class="highlight"
+              [innerHTML]="
+                row[col.field] || row[col.field.replace('Summary', '')]
+              "
+            ></td>
           }
         </tr>
       </ng-template>

@@ -5,6 +5,7 @@ import co.elastic.clients.elasticsearch._types.LatLonGeoLocation;
 import co.elastic.clients.elasticsearch._types.query_dsl.Query;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Highlight;
+import co.elastic.clients.elasticsearch.core.search.Hit;
 import com.ddm.server.bll.contracts.ISearchService;
 import com.ddm.server.bll.dtos.search.GeoPointSearchRequest;
 import com.ddm.server.bll.dtos.search.KnnSearchRequest;
@@ -55,11 +56,19 @@ public class SearchService implements ISearchService {
                                             .fuzziness("AUTO")
                                             .query(request.getValue())
                                     )
+                            )
+                            .highlight(h -> h
+                                    .fields(request.getFieldName(), f -> f
+                                            .preTags("<b>")
+                                            .postTags("</b>")
+                                            .fragmentSize(150)
+                                            .numberOfFragments(1)
+                                    )
                             ),
                     SecurityDocumentIndex.class
             );
 
-            return new PageImpl<>(response.hits().hits().stream().map(hit -> new SecurityDocumentSearchResponse(hit.source())).collect(Collectors.toList()), pageable, response.hits().hits().size());
+            return this.resultsWithProcessedHighlights(response, request.getFieldName(), pageable);
         } catch (Exception e) {
             log.error("Error when making an simple index search {}", e.getMessage());
             throw new Exception("Error searching the indexed documents.");
@@ -94,8 +103,7 @@ public class SearchService implements ISearchService {
                             ),
                     SecurityDocumentIndex.class
             );
-            return new PageImpl<>(response.hits().hits().stream().map(hit -> new SecurityDocumentSearchResponse(hit.source())).collect(Collectors.toList()), pageable, response.hits().hits().size());
-//            return this.returnSearchResults(response,SearchType.KNN, Collections.singletonList(fieldName), page);
+            return this.resultsWithProcessedHighlights(response, "documentContent", pageable);
         } catch (Exception e) {
             log.error("Error when making an knn index search {}", e.getMessage());
             throw new Exception("Error searching the indexed documents.");
@@ -114,7 +122,7 @@ public class SearchService implements ISearchService {
                             .query(esQuery),
                     SecurityDocumentIndex.class
             );
-            return new PageImpl<>(response.hits().hits().stream().map(hit -> new SecurityDocumentSearchResponse(hit.source())).collect(Collectors.toList()), pageable, response.hits().hits().size());
+            return this.resultsWithProcessedHighlights(response, "documentContent", pageable);
         } catch (Exception e) {
             log.error("Error when making an bq index search {}", e.getMessage());
             throw new Exception("Error semi-structured searching the indexed documents.");
@@ -143,11 +151,23 @@ public class SearchService implements ISearchService {
                     SecurityDocumentIndex.class
             );
 
-            return new PageImpl<>(response.hits().hits().stream().map(hit -> new SecurityDocumentSearchResponse(hit.source())).collect(Collectors.toList()), pageable, response.hits().hits().size());
-//            return this.returnSearchResults(response, SearchType.GEOLOCATION, Collections.singletonList("attackedOrganizationAddress"), page);
+            return this.resultsWithProcessedHighlights(response, "orgAddress", pageable);
         } catch (Exception e) {
             log.error("Error when making an geocoding index search {}", e.getMessage());
             throw new Exception("Error geolocation searching the indexed documents.");
         }
+    }
+
+    private Page<SecurityDocumentSearchResponse> resultsWithProcessedHighlights(SearchResponse<SecurityDocumentIndex> queryResponse, String field, Pageable pageable) {
+        String contentSummary = null;
+        for (Hit<SecurityDocumentIndex> hit : queryResponse.hits().hits()) {
+            contentSummary = null;
+            if (hit.highlight() != null && hit.highlight().get(field) != null) {
+                // take the first fragment as summary
+                contentSummary = hit.highlight().get(field).get(0);
+            }
+        }
+        final String summary = contentSummary;
+        return new PageImpl<>(queryResponse.hits().hits().stream().map(hit -> new SecurityDocumentSearchResponse(hit.source(), summary)).collect(Collectors.toList()), pageable, queryResponse.hits().hits().size());
     }
 }
