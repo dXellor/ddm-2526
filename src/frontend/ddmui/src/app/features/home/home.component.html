@@ -129,9 +129,8 @@
       [totalRecords]="totalRecords"
       [first]="0"
       (onPage)="onPageChange($event)"
-      (onRowSelect)="downloadRowFile($event)"
-      [(selection)]="selectedDocument"
       [selectionMode]="'single'"
+      [dataKey]="'id'"
     >
       <!-- Header -->
       <ng-template pTemplate="header">
@@ -151,7 +150,7 @@
         </tr>
       </ng-template>
       <ng-template pTemplate="body" let-row>
-        <tr>
+        <tr (click)="downloadRowFile(row)">
           @for (col of columns; track col.field) {
             <!-- Use innerHTML for summary / highlighted fields -->
             <td
@@ -160,9 +159,6 @@
                 row[col.field] || row[col.field.replace('Summary', '')]
               "
             >
-              <button (click)="downloadRowFile(row); $event.stopPropagation()">
-                Download
-              </button>
             </td>
           }
         </tr>

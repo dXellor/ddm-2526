@@ -141,12 +141,12 @@ export class HomeComponent {
     }
   }
 
-  downloadRowFile(row: any) {
-  this.documentService.downloadFile(row.id).subscribe(blob => {
+  downloadRowFile(event: any) {
+  this.documentService.downloadFile(event.id).subscribe(blob => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = row.filename || 'file';
+    a.download = event.filename || 'file';
     a.click();
     window.URL.revokeObjectURL(url);
   }, err => {

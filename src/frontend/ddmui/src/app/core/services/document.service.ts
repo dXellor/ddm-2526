@@ -13,8 +13,11 @@ export class DocumentService {
   constructor(private http: HttpClient) {}
 
   downloadFile(id: number) {
+    const token = localStorage.getItem('token');
+
     return this.http.get(`${this.API_URL}/${id}`, {
-      responseType: 'blob'
+      responseType: 'blob',
+      headers: { Authorization: `Bearer ${token}` },
     });
   }
 
@@ -23,18 +26,30 @@ export class DocumentService {
     formData.append('document', document);
     const token = localStorage.getItem('token');
 
-    return this.http.post<SecurityDocumentInfo>(`${this.API_URL}/parse`, formData, {headers: { Authorization: `Bearer ${token}` },});
+    return this.http.post<SecurityDocumentInfo>(
+      `${this.API_URL}/parse`,
+      formData,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
   }
 
-  indexDocument(updatedInfo: SecurityDocumentInfo): Observable<SecurityDocumentInfo> {
+  indexDocument(
+    updatedInfo: SecurityDocumentInfo,
+  ): Observable<SecurityDocumentInfo> {
     const token = localStorage.getItem('token');
 
-    return this.http.post<SecurityDocumentInfo>(`${this.API_URL}/index`, updatedInfo, {headers: { Authorization: `Bearer ${token}` },});
+    return this.http.post<SecurityDocumentInfo>(
+      `${this.API_URL}/index`,
+      updatedInfo,
+      { headers: { Authorization: `Bearer ${token}` } },
+    );
   }
 
-  deleteDocument(id: number){
+  deleteDocument(id: number) {
     const token = localStorage.getItem('token');
 
-    return this.http.delete(`${this.API_URL}/${id}`, {headers: { Authorization: `Bearer ${token}` },});
+    return this.http.delete(`${this.API_URL}/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
   }
 }
