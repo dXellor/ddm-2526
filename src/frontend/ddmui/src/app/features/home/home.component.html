@@ -70,15 +70,26 @@
         </p-tabpanel>
 
         <p-tabpanel [value]="3">
-          <div class="flex gap-2">
-            <input
-              pInputText
-              type="number"
-              [(ngModel)]="knnValue"
-              placeholder="K value"
-            />
-            <button pButton label="Search" (click)="search()"></button>
-          </div>
+          <p-tabpanel [value]="3">
+            <div class="flex gap-2 align-items-center">
+              <!-- KNN Query Input -->
+              <input
+                pInputText
+                [(ngModel)]="knnQuery"
+                placeholder="Enter your KNN query..."
+                class="w-20rem"
+              />
+
+              <!-- Search Button -->
+              <button
+                pButton
+                label="Search"
+                icon="pi pi-search"
+                (click)="search()"
+                [disabled]="!knnQuery"
+              ></button>
+            </div>
+          </p-tabpanel>
         </p-tabpanel>
       </p-tabpanels>
     </p-tabs>

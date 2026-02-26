@@ -25,4 +25,14 @@ export class SearchService {
     return this.http.get<SearchResponse>(`${this.API_URL}/parameter`, {params, headers: { Authorization: `Bearer ${token}`}});
   }
 
+  knnSearch(request: { query: string }, page: number = 0, size: number = 10): Observable<SearchResponse> {
+
+    const token = localStorage.getItem('token');
+    const params = new HttpParams()
+      .set('query', request.query)
+      .set('page', page)
+      .set('size', size);
+
+    return this.http.get<SearchResponse>(`${this.API_URL}/knn`, {params, headers: { Authorization: `Bearer ${token}`}});
+  }
 }

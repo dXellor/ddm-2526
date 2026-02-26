@@ -80,7 +80,7 @@ public class SearchService implements ISearchService {
                             .index("security_documents")
                             .from((int) pageable.getOffset())
                             .size(pageable.getPageSize())
-                            .minScore(0.7)
+                            .minScore(0.6)
                             .query(q -> q
                                     .bool(b -> b
                                             .should(sb -> sb

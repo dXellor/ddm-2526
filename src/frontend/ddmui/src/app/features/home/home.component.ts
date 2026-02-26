@@ -45,10 +45,10 @@ export class HomeComponent {
   currentPage = 0;
 
   searchQuery = '';
+  knnQuery = '';
   booleanQuery = '';
   latitude!: number;
   longitude!: number;
-  knnValue!: number;
 
   results: SearchResult[] = [];
 
@@ -70,20 +70,38 @@ export class HomeComponent {
   }
 
   search(page: number = 0) {
-    if (this.activeTab === 0) {
-      console.log('Simple Search');
-      console.log('Field:', this.selectedField);
-      console.log('Query:', this.searchQuery);
+    switch (this.activeTab) {
+      case 0:
+        this.searchService
+          .parameterSearch({
+            fieldName: this.selectedField,
+            value: this.searchQuery,
+          }, page)
+          .subscribe((res) => {
+            this.results = res.content;
+            this.currentPage = res.pageable.pageNumber;
+          });
+        break;
 
-      this.searchService
-        .parameterSearch({
-          fieldName: this.selectedField,
-          value: this.searchQuery,
-        })
-        .subscribe((res) => {
-          this.results = res.content;
-          this.currentPage = res.pageable.pageNumber;
-        });
+      case 1:
+        break;
+
+      case 2:
+        break;
+
+      case 3:
+        this.searchService
+          .knnSearch({
+            query: this.knnQuery,
+          }, page)
+          .subscribe((res) => {
+            this.results = res.content;
+            this.currentPage = res.pageable.pageNumber;
+          });
+        break;
+
+      default:
+        this.results = [];
     }
   }
 }
