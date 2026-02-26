@@ -52,20 +52,32 @@
         </p-tabpanel>
 
         <p-tabpanel [value]="2">
-          <div class="flex gap-2">
+          <div class="flex flex-column gap-2">
+            <!-- Address Input -->
+            <input
+              pInputText
+              [(ngModel)]="geoAddress"
+              placeholder="Enter address..."
+              class="w-30rem"
+            />
+
+            <!-- Radius Input -->
             <input
               pInputText
               type="number"
-              [(ngModel)]="latitude"
-              placeholder="Latitude"
+              [(ngModel)]="geoRadius"
+              placeholder="Radius (km)"
+              class="w-10rem"
             />
-            <input
-              pInputText
-              type="number"
-              [(ngModel)]="longitude"
-              placeholder="Longitude"
-            />
-            <button pButton label="Search" (click)="search()"></button>
+
+            <!-- Search Button -->
+            <button
+              pButton
+              label="Search"
+              icon="pi pi-search"
+              (click)="search()"
+              [disabled]="!geoAddress || !geoRadius"
+            ></button>
           </div>
         </p-tabpanel>
 

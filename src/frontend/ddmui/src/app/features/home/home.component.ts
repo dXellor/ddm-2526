@@ -47,15 +47,15 @@ export class HomeComponent {
   searchQuery = '';
   knnQuery = '';
   booleanQuery = '';
-  latitude!: number;
-  longitude!: number;
+  geoAddress = '';
+  geoRadius!: number;
 
   results: SearchResult[] = [];
 
   columns = [
     { field: 'id', header: 'ID' },
     { field: 'fullName', header: 'Nadlezni forenzicar' },
-    { field: 'orgName', header: 'Naziv CIRT organizacije' },
+    { field: 'orgName', header: 'Naziv CERT organizacije' },
     { field: 'orgAddress', header: 'Adresa organizacije' },
     { field: 'threatName', header: 'Naziv pretnje' },
     { field: 'threatDescription', header: 'Opis pretnje' },
@@ -73,10 +73,13 @@ export class HomeComponent {
     switch (this.activeTab) {
       case 0:
         this.searchService
-          .parameterSearch({
-            fieldName: this.selectedField,
-            value: this.searchQuery,
-          }, page)
+          .parameterSearch(
+            {
+              fieldName: this.selectedField,
+              value: this.searchQuery,
+            },
+            page,
+          )
           .subscribe((res) => {
             this.results = res.content;
             this.currentPage = res.pageable.pageNumber;
@@ -87,13 +90,28 @@ export class HomeComponent {
         break;
 
       case 2:
+        this.searchService
+          .geoSearch(
+            {
+              address: this.geoAddress,
+              radius: this.geoRadius,
+            },
+            page,
+          )
+          .subscribe((res) => {
+            this.results = res.content;
+            this.currentPage = res.pageable.pageNumber;
+          });
         break;
 
       case 3:
         this.searchService
-          .knnSearch({
-            query: this.knnQuery,
-          }, page)
+          .knnSearch(
+            {
+              query: this.knnQuery,
+            },
+            page,
+          )
           .subscribe((res) => {
             this.results = res.content;
             this.currentPage = res.pageable.pageNumber;

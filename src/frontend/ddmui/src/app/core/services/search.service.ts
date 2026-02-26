@@ -35,4 +35,16 @@ export class SearchService {
 
     return this.http.get<SearchResponse>(`${this.API_URL}/knn`, {params, headers: { Authorization: `Bearer ${token}`}});
   }
+
+  geoSearch(request: { address: string, radius: number }, page: number = 0, size: number = 10): Observable<SearchResponse> {
+
+    const token = localStorage.getItem('token');
+    const params = new HttpParams()
+      .set('address', request.address)
+      .set('distance', request.radius)
+      .set('page', page)
+      .set('size', size);
+
+    return this.http.get<SearchResponse>(`${this.API_URL}/geo`, {params, headers: { Authorization: `Bearer ${token}`}});
+  }
 }

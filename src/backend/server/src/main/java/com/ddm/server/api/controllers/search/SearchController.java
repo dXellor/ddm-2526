@@ -53,7 +53,7 @@ public class SearchController {
     }
 
     @GetMapping("geo")
-    public ResponseEntity<?> searchByGeoPosition(@AuthenticationPrincipal UserDetails userDetails, @RequestBody GeoPointSearchRequest request, Pageable pageable){
+    public ResponseEntity<?> searchByGeoPosition(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute GeoPointSearchRequest request, Pageable pageable){
         try {
             return ResponseEntity.ok(this.searchService.geoPointSearch(request, pageable));
         } catch (Exception e) {
