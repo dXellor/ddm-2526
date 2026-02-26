@@ -41,6 +41,7 @@ export class HomeComponent {
     { label: 'Nivo pretnje', value: 'threatLevel' },
     { label: 'Naziv CIRT organizacije', value: 'orgName' },
     { label: 'Naziv pretnje', value: 'threatName' },
+    { label: 'Ceo dokument', value: 'documentContent' },
   ];
 
   constructor(private searchService: SearchService, private documentService: DocumentService, private router: Router) {}
@@ -142,6 +143,7 @@ export class HomeComponent {
   }
 
   downloadRowFile(event: any) {
+  if(confirm('Download a file?'))
   this.documentService.downloadFile(event.id).subscribe(blob => {
     const url = window.URL.createObjectURL(blob);
     const a = document.createElement('a');
