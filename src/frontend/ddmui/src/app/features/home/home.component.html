@@ -1,3 +1,4 @@
+<app-navbar></app-navbar>
 <div class="p-4">
   <p-card>
     <p-tabs [(value)]="activeTab">
@@ -128,6 +129,9 @@
       [totalRecords]="totalRecords"
       [first]="0"
       (onPage)="onPageChange($event)"
+      (onRowSelect)="downloadRowFile($event)"
+      [(selection)]="selectedDocument"
+      [selectionMode]="'single'"
     >
       <!-- Header -->
       <ng-template pTemplate="header">
@@ -140,7 +144,7 @@
 
       <!-- Body -->
       <ng-template pTemplate="body" let-row>
-        <tr>
+        <tr [pSelectableRow]="'row'">
           @for (col of columns; track col.field) {
             <td>{{ row[col.field] }}</td>
           }
@@ -150,11 +154,16 @@
         <tr>
           @for (col of columns; track col.field) {
             <!-- Use innerHTML for summary / highlighted fields -->
-            <td class="highlight"
+            <td
+              class="highlight"
               [innerHTML]="
                 row[col.field] || row[col.field.replace('Summary', '')]
               "
-            ></td>
+            >
+              <button (click)="downloadRowFile(row); $event.stopPropagation()">
+                Download
+              </button>
+            </td>
           }
         </tr>
       </ng-template>

@@ -35,6 +35,9 @@ public class SecurityDocument {
     @Column(name = "document_key")
     private String documentKey;
 
+    @Column(name = "document_original_name")
+    private String documentOriginalName;
+
     @Column(name = "threat_sample_hash")
     private String threatSampleHash;
 

@@ -11,6 +11,10 @@ import { DropdownModule } from 'primeng/dropdown';
 import { SearchService } from '../../core/services/search.service';
 import { SearchResponse } from '../../core/models/search-response';
 import { SearchResult } from '../../core/models/search-result';
+import { DocumentService } from '../../core/services/document.service';
+import {MenubarModule} from 'primeng/menubar'
+import { Router } from '@angular/router';
+import { NavbarComponent } from "../navbar/navbar.component";
 
 @Component({
   selector: 'app-home',
@@ -23,7 +27,9 @@ import { SearchResult } from '../../core/models/search-result';
     ButtonModule,
     CardModule,
     DropdownModule,
-  ],
+    MenubarModule,
+    NavbarComponent
+],
   templateUrl: './home.component.html',
 })
 export class HomeComponent {
@@ -37,12 +43,13 @@ export class HomeComponent {
     { label: 'Naziv pretnje', value: 'threatName' },
   ];
 
-  constructor(private searchService: SearchService) {}
+  constructor(private searchService: SearchService, private documentService: DocumentService, private router: Router) {}
 
   //Pagination
   totalRecords = 0;
   rows = 10;
   currentPage = 0;
+  selectedDocument: any
 
   searchQuery = '';
   knnQuery = '';
@@ -133,4 +140,17 @@ export class HomeComponent {
         this.results = [];
     }
   }
+
+  downloadRowFile(row: any) {
+  this.documentService.downloadFile(row.id).subscribe(blob => {
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = row.filename || 'file';
+    a.click();
+    window.URL.revokeObjectURL(url);
+  }, err => {
+    console.error('File download error', err);
+  });
+}
 }

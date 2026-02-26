@@ -1,6 +1,7 @@
 package com.ddm.server.bll.services;
 
 import com.ddm.server.bll.contracts.IDocumentParsingService;
+import com.ddm.server.bll.dtos.upload.SecurityDocumentFileResponse;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentInfo;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentUploadRequest;
 import com.ddm.server.dll.models.SecurityDocument;
@@ -16,10 +17,13 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
 import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.core.ResponseInputStream;
 import software.amazon.awssdk.core.sync.RequestBody;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.s3.S3Client;
 import software.amazon.awssdk.services.s3.model.DeleteObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectRequest;
+import software.amazon.awssdk.services.s3.model.GetObjectResponse;
 import software.amazon.awssdk.services.s3.model.PutObjectRequest;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.text.PDFTextStripper;
@@ -142,6 +146,23 @@ public class DocumentParsingService implements IDocumentParsingService {
         return new SecurityDocumentInfo(document);
     }
 
+    @Override
+    public SecurityDocumentFileResponse getFile(Long id) throws Exception {
+        SecurityDocument document = this.securityDocumentRepository.getReferenceById(id);
+        try{
+            ResponseInputStream<GetObjectResponse> response = s3.getObject(
+                    GetObjectRequest.builder().bucket(this.securityDocumentBucket).key(document.getDocumentKey()).build()
+            );
+            byte[] fileBytes = response.readAllBytes();
+            response.close();
+
+            return new SecurityDocumentFileResponse(fileBytes, document.getDocumentOriginalName());
+        }catch (IOException e){
+            log.error("Unable to download a document with the key: {}", document.getDocumentKey());
+            throw new Exception("Unable to download document from the server. Aborting request");
+        }
+    }
+
     private SecurityDocument parseDocument(MultipartFile file){
         try(PDDocument document = Loader.loadPDF(file.getBytes())){
             PDFTextStripper stripper = new PDFTextStripper();
@@ -177,6 +198,7 @@ public class DocumentParsingService implements IDocumentParsingService {
             doc.setThreatSampleHash(hashPatternMatcher.group(1));
             doc.setThreatDescription(descriptionMatcher.group(1));
             doc.setDocumentContent(text);
+            doc.setDocumentOriginalName(file.getOriginalFilename());
 
             return doc;
 

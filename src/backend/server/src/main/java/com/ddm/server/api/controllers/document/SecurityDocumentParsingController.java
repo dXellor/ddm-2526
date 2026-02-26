@@ -1,9 +1,13 @@
 package com.ddm.server.api.controllers.document;
 
 import com.ddm.server.bll.contracts.IDocumentParsingService;
+import com.ddm.server.bll.dtos.upload.SecurityDocumentFileResponse;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentInfo;
 import com.ddm.server.bll.dtos.upload.SecurityDocumentUploadRequest;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.ByteArrayResource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -52,5 +56,25 @@ public class SecurityDocumentParsingController {
     public ResponseEntity<?> deleteDocument(@AuthenticationPrincipal UserDetails userDetails, @PathVariable Long id){
         this.documentService.delete(id);
         return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<?> getDocument(@AuthenticationPrincipal UserDetails userDetails,
+                                        @PathVariable Long id){
+        try {
+            // Get file from service
+            SecurityDocumentFileResponse file = this.documentService.getFile(id); // contains byte[], filename, contentType
+
+            ByteArrayResource resource = new ByteArrayResource(file.getFile());
+
+            return ResponseEntity.ok()
+                    .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + file.getFileName() + "\"")
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .contentLength(file.getFile().length)
+                    .body(resource);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }

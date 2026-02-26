@@ -1,0 +1,141 @@
+<app-navbar></app-navbar>
+<div class="card p-4">
+  <h2 class="text-2xl font-bold mb-4">File Upload Demo</h2>
+
+  <p-fileUpload
+    #fileUpload
+    chooseLabel="Select File"
+    uploadLabel="Upload"
+    cancelLabel="Cancel"
+    [customUpload]="true"
+    [auto]="false"
+    [multiple]="false"
+    accept="image/*,.pdf,.doc,.docx"
+    maxFileSize="10000000"
+    (uploadHandler)="onFileUpload($event)"
+    (onRemove)="onFileRemove()"
+    invalidFileSizeMessageDetail="Max file size is 10MB."
+    invalidFileTypeMessageDetail="Only images, PDF, and Word documents are allowed."
+  >
+  </p-fileUpload>
+
+  <p-messages></p-messages>
+</div>
+
+<p-dialog
+  header="Edit Document Details"
+  [(visible)]="showDialog"
+  [modal]="true"
+  [style]="{ width: '60vw' }"
+  [baseZIndex]="10000"
+>
+  <form class="p-4" (ngSubmit)="onSubmit()">
+    <div class="grid">
+      <!-- Personal Info -->
+      <div class="field col-12 md:col-6">
+        <label for="fullName" class="block mb-2 font-medium">Full Name *</label>
+        <input
+          pInputText
+          id="fullName"
+          [(ngModel)]="documentForm().fullName"
+          name="fullName"
+          required
+          class="w-full"
+        />
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="orgName" class="block mb-2 font-medium"
+          >Organization *</label
+        >
+        <input
+          pInputText
+          id="orgName"
+          [(ngModel)]="documentForm().orgName"
+          name="orgName"
+          required
+          class="w-full"
+        />
+      </div>
+
+      <div class="field col-12">
+        <label for="orgAddress" class="block mb-2 font-medium"
+          >Organization Address</label
+        >
+        <input
+          pInputText
+          id="orgAddress"
+          [(ngModel)]="documentForm().orgAddress"
+          name="orgAddress"
+          class="w-full"
+        />
+      </div>
+
+      <!-- Threat Info -->
+      <div class="field col-12 md:col-6">
+        <label for="threatName" class="block mb-2 font-medium"
+          >Threat Name *</label
+        >
+        <input
+          pInputText
+          id="threatName"
+          [(ngModel)]="documentForm().threatName"
+          name="threatName"
+          required
+          class="w-full"
+        />
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="threatLevel" class="block mb-2 font-medium"
+          >Threat Level *</label
+        >
+        <p-dropdown
+          [options]="threatLevels"
+          [(ngModel)]="documentForm().threatLevel"
+          name="threatLevel"
+          placeholder="Select Level"
+          optionLabel="label"
+          optionValue="value"
+          required
+          class="w-full"
+        >
+        </p-dropdown>
+      </div>
+
+      <div class="field col-12 md:col-6">
+        <label for="threatSampleHash" class="block mb-2 font-medium"
+          >Sample Hash</label
+        >
+        <input
+          pInputText
+          id="threatSampleHash"
+          [(ngModel)]="documentForm().threatSampleHash"
+          name="threatSampleHash"
+          class="w-full"
+        />
+      </div>
+    </div>
+    <br /><br />
+    <div class="flex gap-2 mt-6">
+      <button
+        pButton
+        type="submit"
+        label="Save Document"
+        icon="pi pi-check"
+        [loading]="submitting"
+        class="flex-1"
+      ></button>
+    </div>
+
+    <br />
+    <button
+      pButton
+      type="button"
+      label="Cancel"
+      severity="secondary"
+      icon="pi pi-times"
+      class="flex-1 md:flex-none md:w-32"
+      (click)="onCancel()"
+    ></button></form
+></p-dialog>
