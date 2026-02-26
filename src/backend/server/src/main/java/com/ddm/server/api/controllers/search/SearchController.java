@@ -11,6 +11,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
@@ -25,7 +26,7 @@ public class SearchController {
     }
 
     @GetMapping("parameter")
-    public ResponseEntity<?> searchByParameter(@AuthenticationPrincipal UserDetails userDetails, @RequestBody ParameterSearchRequest request, Pageable pageable){
+    public ResponseEntity<?> searchByParameter(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute ParameterSearchRequest request, Pageable pageable){
         try {
             return ResponseEntity.ok(this.searchService.parameterSearch(request, pageable));
         } catch (Exception e) {
@@ -34,7 +35,7 @@ public class SearchController {
     }
 
     @GetMapping("knn")
-    public ResponseEntity<?> searchByKnn(@AuthenticationPrincipal UserDetails userDetails, @RequestBody KnnSearchRequest request, Pageable pageable){
+    public ResponseEntity<?> searchByKnn(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute KnnSearchRequest request, Pageable pageable){
         try {
             return ResponseEntity.ok(this.searchService.knnSearch(request, pageable));
         } catch (Exception e) {
@@ -43,7 +44,7 @@ public class SearchController {
     }
 
     @GetMapping("bq")
-    public ResponseEntity<?> searchByBq(@AuthenticationPrincipal UserDetails userDetails, @RequestBody BqSearchRequest request, Pageable pageable){
+    public ResponseEntity<?> searchByBq(@AuthenticationPrincipal UserDetails userDetails, @ModelAttribute BqSearchRequest request, Pageable pageable){
         try {
             return ResponseEntity.ok(this.searchService.semiStructuredSearch(request.getQuery(), pageable));
         } catch (Exception e) {
